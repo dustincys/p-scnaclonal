@@ -30,6 +30,7 @@ def run_dp_model(args):
     '''
     data = load_data(args.inputFilePath)
 
+    # trace the record
     trace_db = TraceDB(args.out_dir, data.keys())
     cluster_density = FragmentSampledDensity()
 
@@ -45,10 +46,11 @@ def run_dp_model(args):
         shutil.rmtree(args.out_dir)
         raise
 
-    sampler.sample(data.values(), trace_db, num_iters=args.num_iters)
+    sampler.sample(data.segments, trace_db, num_iters=args.num_iters)
     trace_db.close()
 
-def load_data(in_file):
+
+def load_data(inputFilePath):
     inputFile = open(inputFilePath, 'rb')
     data_pkl = pkl.load(inputFile)
 
@@ -73,5 +75,9 @@ def load_data(in_file):
 
     return data
 
+def load_data_mixclone(inputFilePath):
+    inputFile = open(inputFilePath, 'rb')
+    data = pkl.load(inputFile)
+    return data
 
 

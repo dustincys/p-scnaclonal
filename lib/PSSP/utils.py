@@ -16,12 +16,13 @@
 
 import numpy as np
 from scipy.special import gammaln
+from scipy.misc import comb
 
 from constants import EMPIRI_AAF, EMPIRI_BAF
 
 
 def get_loga(data):
-    return np.log(data.DT + 1) - np.log(data.DN + 1)
+    return np.log(data.tumor_reads_num + 1) - np.log(data.normal_reads_num + 1)
 
 
 def log_poisson_likelihood(k, Lambda):
@@ -49,10 +50,15 @@ def get_cn_allele_config(max_copynumber):
 
 
 def get_mu_E_joint(mu_N, mu_G, c_N, c_H, phi):
-    axis_1_shape = (phi.size, 1, 1)
-    axis_2_shape = (1, c_H.size, 1)
-    axis_3_shape = (1, 1, mu_G.size)
-    phi = phi.reshape(axis_1_shape)
-    c_H = c_H.reshape(axis_2_shape)
-    mu_G = mu_G.reshape(axis_3_shape)
     return ((1.0 - phi)*c_N*mu_N + phi*c_H*mu_G)/((1.0 - phi)*c_N + phi*c_H)
+
+
+def log_binomial_likelihood(k, n, mu):
+    column_shape = (k.size, 1)
+    row_shape = (1, mu.size)
+    cb = comb(n, k)
+    cb = cb.reshape(column_shape) * np.ones((row_shape))
+    k = k.reshape(column_shape)
+    n = n.reshape(column_shape)
+    mu = mu.reshape(row_shape)
+    return np.log(cb) + k * np.log(mu) + (n - k) * np.log(1 - mu)
