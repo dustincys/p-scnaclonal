@@ -16,9 +16,12 @@ from collections import namedtuple
 from pydp.densities import Density, log_poisson_pdf
 # from pydp.utils import log_sum_exp
 
-from utils import get_loga, get_cn_allele_config
+from utils import get_loga, get_cn_allele_config, get_mu_E_joint,\
+    log_binomial_likelihood
 
 import constants
+from random import randint
+import numpy as np
 
 
 FragmentSampledData = namedtuple(
@@ -45,6 +48,15 @@ class FragmentSampledDensity(Density):
             if data.phi_last is None:
                 data.phi_last = {}
 
+            if len(data.phi_last) >= constants.SEG_RECORD_SIZE:
+                idx = randint(0, constants.SEG_RECORD_SIZE - 1)
+                data.phi_last.pop(data.phi_last.keys()[idx])
+
+            ll, cn, pi = self._getSegResData(data, phi)
+            data.phi_last[phi] = SegmentResultData(ll, cn, pi)
+            return ll
+
+    def _getSegResData(self, data, phi):
         copy_numbers = None
         if data.BASELINE == "True":
             copy_numbers = [2]
@@ -53,30 +65,25 @@ class FragmentSampledDensity(Density):
         else:
             copy_numbers = range(0, 2 + 1)
 
-        ll_phi_s = [self._getLLSeg(data, copy_number, phi) for copy_number in
+        ll_pi_s = [self._getLLSeg(data, copy_number, phi) for copy_number in
                    copy_numbers]
-        (ll, phi) = max(ll_phi_s, key = lambda x: x[0])
-        cn = ll_phi_s.index((ll, phi))
-        data.phi_last[phi] = SegmentResultData(ll, cn, pi)
-        return ll
+        (ll, pi) = max(ll_pi_s, key=lambda x: x[0])
+        cn = ll_pi_s.index((ll, pi))
+        return ll, cn, pi
 
     def _getLLSeg(self, data, copy_number, phi):
         # get the likelihood of segment and it genotype
         ll_seg = 0
-
         ll_rd = self._getRD(data, copy_number, phi)
-
         allele_types = self._allele_config[copy_number]
         ll_baf, pi = self._getBAF(data, copy_number, allele_types, phi)
-
         ll_seg = ll_baf + ll_rd
-
         return ll_seg, pi
 
     def _getRD(self, data, copy_number, phi):
         c_N = constants.COPY_NUMBER_NORMAL
         bar_c = phi * copy_number + (1.0 - phi) * c_N
-        lambda_possion = (bar_c / c_N) * baseline * (data.DN + 1) - 1
+        lambda_possion = (bar_c / c_N) * self._baseline * (data.DN + 1) - 1
         ll_RD = log_poisson_pdf(data.DT, lambda_possion)
         return ll_RD
 

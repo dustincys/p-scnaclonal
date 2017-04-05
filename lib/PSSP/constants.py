@@ -21,3 +21,7 @@ BASELINE = 0
 # to compute VAF of CN = 0
 EMPIRI_BAF = 0.485
 EMPIRI_AAF = 1 - EMPIRI_BAF
+
+
+# segment buffer size
+SEG_RECORD_SIZE = 10
