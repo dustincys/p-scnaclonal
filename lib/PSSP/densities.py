@@ -10,22 +10,14 @@
 #       History: @author: andrew
 # =============================================================================
 '''
-# from multiprocessing import Pool
 from collections import namedtuple
-
 from pydp.densities import Density, log_poisson_pdf
-# from pydp.utils import log_sum_exp
-
 from utils import get_loga, get_cn_allele_config, get_mu_E_joint,\
     log_binomial_likelihood
-
 import constants
 from random import randint
 import numpy as np
 
-
-FragmentSampledData = namedtuple(
-    'FragmentSampledData', ['CN', 'SN', 'DT', 'DN', 'BAFs', 'BASELINE'])
 
 SegmentResultData = namedtuple(
     'SegmentResultData', ['likelihood', 'copy_number', 'cellular_prevalence'])
@@ -40,60 +32,64 @@ class FragmentSampledDensity(Density):
         self._max_copy_number = max_copy_number
         self._allele_config = get_cn_allele_config(max_copy_number)
 
-    def log_p(self, data, phi):
+    def log_p(self, seg, phi):
         # phi
-        if data.phi_last is not None and phi in data.phi_last.keys():
-            return data.phi_last[phi].likelihood
+        if seg.phi_last is not None and phi in seg.phi_last.keys():
+            return seg.phi_last[phi].likelihood
         else:
-            if data.phi_last is None:
-                data.phi_last = {}
+            if seg.phi_last is None:
+                seg.phi_last = {}
 
-            if len(data.phi_last) >= constants.SEG_RECORD_SIZE:
+            if len(seg.phi_last) >= constants.SEG_RECORD_SIZE:
                 idx = randint(0, constants.SEG_RECORD_SIZE - 1)
-                data.phi_last.pop(data.phi_last.keys()[idx])
+                seg.phi_last.pop(seg.phi_last.keys()[idx])
 
-            ll, cn, pi = self._getSegResData(data, phi)
-            data.phi_last[phi] = SegmentResultData(ll, cn, pi)
+            ll, cn, pi = self._getSegResData(seg, phi)
+            seg.phi_last[phi] = SegmentResultData(ll, cn, pi)
             return ll
 
-    def _getSegResData(self, data, phi):
+    def _getSegResData(self, seg, phi):
         copy_numbers = None
-        if data.BASELINE == "True":
+        if seg.BASELINE == "True":
             copy_numbers = [2]
-        elif get_loga(data) > self._baseline:
+        elif get_loga(seg) > self._baseline:
             copy_numbers = range(2, self._max_copy_number + 1)
         else:
             copy_numbers = range(0, 2 + 1)
 
-        ll_pi_s = [self._getLLSeg(data, copy_number, phi) for copy_number in
+        ll_pi_s = [self._getLLSeg(seg, copy_number, phi) for copy_number in
                    copy_numbers]
         (ll, pi) = max(ll_pi_s, key=lambda x: x[0])
         cn = ll_pi_s.index((ll, pi))
         return ll, cn, pi
 
-    def _getLLSeg(self, data, copy_number, phi):
-        # get the likelihood of segment and it genotype
+    def _getLLSeg(self, seg, copy_number, phi):
         ll_seg = 0
-        ll_rd = self._getRD(data, copy_number, phi)
+        ll_rd = self._getRD(seg, copy_number, phi)
         allele_types = self._allele_config[copy_number]
-        ll_baf, pi = self._getBAF(data, copy_number, allele_types, phi)
+
+        if 0 == seg.BAF.shape[0]:
+            ll_baf = 0
+            pi = "*"
+        else:
+            ll_baf, pi = self._getBAF(seg, copy_number, allele_types, phi)
         ll_seg = ll_baf + ll_rd
         return ll_seg, pi
 
-    def _getRD(self, data, copy_number, phi):
+    def _getRD(self, seg, copy_number, phi):
         c_N = constants.COPY_NUMBER_NORMAL
         bar_c = phi * copy_number + (1.0 - phi) * c_N
-        lambda_possion = (bar_c / c_N) * self._baseline * (data.DN + 1) - 1
-        ll_RD = log_poisson_pdf(data.DT, lambda_possion)
+        lambda_possion = (bar_c / c_N) * self._baseline * (seg.DN + 1) - 1
+        ll_RD = log_poisson_pdf(seg.DT, lambda_possion)
         return ll_RD
 
-    def _getBAF(self, data, copy_number, allele_types, phi):
+    def _getBAF(self, seg, copy_number, allele_types, phi):
         c_N = constants.COPY_NUMBER_NORMAL
         mu_N = constants.MU_N
         mu_G = np.array(allele_types.keys())
         mu_E = get_mu_E_joint(mu_N, mu_G, c_N, copy_number, phi)
-        a_T_j = data.BAF[:, 2]
-        b_T_j = data.BAF[:, 3]
+        a_T_j = seg.BAF[:, 2]
+        b_T_j = seg.BAF[:, 3]
         d_T_j = a_T_j + b_T_j
         # add prior or not?
         ll = log_binomial_likelihood(b_T_j, d_T_j, mu_E)
