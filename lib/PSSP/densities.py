@@ -98,9 +98,8 @@ class FragmentSampledDensity(Density):
         mu_N = constants.MU_N
         mu_G = np.array(allele_types.keys())
         mu_E = get_mu_E_joint(mu_N, mu_G, c_N, copy_number, phi)
-        a_T_j = seg.BAF[:, 2]
-        b_T_j = seg.BAF[:, 3]
-        d_T_j = a_T_j + b_T_j
+        b_T_j = np.min(seg.BAF[:, 2:4], axis=1)
+        d_T_j = np.sum(seg.BAF[:, 2:4], axis=1)
         # add prior or not?
         ll = log_binomial_likelihood(b_T_j, d_T_j, mu_E)
         ll_bafs = ll.sum(axis=0)

@@ -33,7 +33,7 @@ def get_cn_allele_config(max_copynumber):
     cn_allele_config = {}
     for cn in range(0, max_copynumber + 1):
         allele_config = {}
-        for M_num in range(0, cn + 1):
+        for M_num in range(0, (cn + 2)/2):
             P_num = cn - M_num
             if P_num == 0 and M_num == 0:
                 mu_T = EMPIRI_BAF / (EMPIRI_AAF + EMPIRI_BAF)
@@ -42,7 +42,7 @@ def get_cn_allele_config(max_copynumber):
                 mu_T = 0.5
                 pi_T = 'P'*P_num + 'M'*M_num
             else:
-                mu_T = (P_num * 1.0) / cn
+                mu_T = (M_num * 1.0) / cn
                 pi_T = 'P'*P_num + 'M'*M_num + '/' + 'P'*M_num + 'M'*P_num
             allele_config[pi_T] = mu_T
         cn_allele_config[cn] = allele_config
