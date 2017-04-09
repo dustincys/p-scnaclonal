@@ -25,3 +25,5 @@ EMPIRI_AAF = 1 - EMPIRI_BAF
 
 # segment buffer size
 SEG_RECORD_SIZE = 10
+
+BAF_THRESHOLD = 0.5

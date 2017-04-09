@@ -21,7 +21,6 @@ from PSSP.sampler import DirichletProcessSampler
 from PSSP.trace import TraceDB
 
 import pickle as pkl
-import numpy as np
 
 
 def run_dp_model(args):
@@ -29,7 +28,6 @@ def run_dp_model(args):
     Run a fresh instance of the DP model.
     '''
     data = load_data_mixclone(args.inputFilePath)
-    trim_low_BAF(data)
 
     # trace the record
     mutation_names = [data.segments[i].name for i in range(len(data.segments))]
@@ -55,26 +53,3 @@ def load_data_mixclone(inputFilePath):
     inputFile = open(inputFilePath, 'rb')
     data = pkl.load(inputFile)
     return data
-
-
-def trim_low_BAF(data):
-    stripes = set([seg.stripe_number for seg in data.segments])
-    for sp in stripes:
-        segs = filter(lambda seg: sp == seg.stripe_number, data.segments)
-        trim_stripe(segs)
-
-
-def trim_stripe(segments):
-    coverages = []
-    for seg in segments:
-        coverages.extend(list(seg.BAF[:, 2] + seg.BAF[:, 3]))
-    threshold = getCovThreshold(coverages)
-    for seg in segments:
-        d = seg.BAF[:, 2] + seg.BAF[:, 3]
-        idx_rm = tuple(np.where(d < threshold)[0])
-        seg.BAF = np.delete(seg.BAF, idx_rm, axis=0)
-
-
-def getCovThreshold(coverages):
-
-

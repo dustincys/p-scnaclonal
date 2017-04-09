@@ -25,11 +25,12 @@ SegmentResultData = namedtuple(
 
 class FragmentSampledDensity(Density):
 
-    def __init__(self, baseline=0, max_copy_number=7, params=None):
+    def __init__(self, baseline=0, max_copy_number=7, coverage=30, params=None):
         Density.__init__(self, params=None)
 
         self._baseline = baseline
         self._max_copy_number = max_copy_number
+        self._coverage = coverage
         self._allele_config = get_cn_allele_config(max_copy_number)
 
     def log_p(self, seg, phi):
@@ -67,7 +68,7 @@ class FragmentSampledDensity(Density):
         ll_seg = 0
         ll_rd = self._getRD(seg, copy_number, phi)
         allele_types = self._allele_config[copy_number]
-
+        self._trimBAF(seg, copy_number)
         if 0 == seg.BAF.shape[0]:
             ll_baf = 0
             pi = "*"
@@ -75,6 +76,15 @@ class FragmentSampledDensity(Density):
             ll_baf, pi = self._getBAF(seg, copy_number, allele_types, phi)
         ll_seg = ll_baf + ll_rd
         return ll_seg, pi
+
+    def _trimBAF(self, seg, copy_number):
+        if copy_number > 2:
+            threshold = constants.BAF_THRESHOLD * self._coverage
+            d = seg.BAF[:, 2] + seg.BAF[:, 3]
+            idx_rm = tuple(np.where(d < threshold)[0])
+            seg.BAF = np.delete(seg.BAF, idx_rm, axis=0)
+        else:
+            pass
 
     def _getRD(self, seg, copy_number, phi):
         c_N = constants.COPY_NUMBER_NORMAL
