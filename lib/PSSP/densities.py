@@ -13,7 +13,7 @@
 from collections import namedtuple
 from pydp.densities import Density, log_poisson_pdf
 from utils import get_loga, get_cn_allele_config, get_mu_E_joint,\
-    log_binomial_likelihood
+    log_binomial_likelihood, mad_based_outlier
 import constants
 from random import randint
 import numpy as np
@@ -68,7 +68,7 @@ class FragmentSampledDensity(Density):
         ll_seg = 0
         ll_rd = self._getRD(seg, copy_number, phi)
         allele_types = self._allele_config[copy_number]
-        self._trimBAF(seg, copy_number)
+        self._augBAF(seg, copy_number)
         if 0 == seg.BAF.shape[0]:
             ll_baf = 0
             pi = "*"
@@ -77,12 +77,21 @@ class FragmentSampledDensity(Density):
         ll_seg = ll_baf + ll_rd
         return ll_seg, pi
 
-    def _trimBAF(self, seg, copy_number):
+    def _augBAF(self, seg, copy_number):
         if copy_number > 2:
             threshold = constants.BAF_THRESHOLD * self._coverage
-            d = seg.BAF[:, 2] + seg.BAF[:, 3]
-            idx_rm = tuple(np.where(d < threshold)[0])
+            d_T_j = np.sum(seg.BAF[:, 2:4], axis=1)
+            idx_rm = tuple(np.where(d_T_j < threshold)[0])
             seg.BAF = np.delete(seg.BAF, idx_rm, axis=0)
+        else:
+            pass
+
+        if seg.BAF.shape[0] > 1:
+            b_T_j = np.min(seg.BAF[:, 2:4], axis=1)
+            d_T_j = np.sum(seg.BAF[:, 2:4], axis=1)
+            baf = b_T_j * 1.0 / d_T_j
+            outlier = mad_based_outlier(baf)
+            seg.BAF = np.delete(seg.BAF, list(outlier.astype(int)), axis=0)
         else:
             pass
 
