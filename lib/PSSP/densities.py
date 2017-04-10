@@ -86,15 +86,6 @@ class FragmentSampledDensity(Density):
         else:
             pass
 
-        if seg.BAF.shape[0] > 1:
-            b_T_j = np.min(seg.BAF[:, 2:4], axis=1)
-            d_T_j = np.sum(seg.BAF[:, 2:4], axis=1)
-            baf = b_T_j * 1.0 / d_T_j
-            outlier = mad_based_outlier(baf)
-            seg.BAF = np.delete(seg.BAF, list(outlier.astype(int)), axis=0)
-        else:
-            pass
-
     def _getRD(self, seg, copy_number, phi):
         c_N = constants.COPY_NUMBER_NORMAL
         bar_c = phi * copy_number + (1.0 - phi) * c_N
@@ -107,8 +98,21 @@ class FragmentSampledDensity(Density):
         mu_N = constants.MU_N
         mu_G = np.array(allele_types.keys())
         mu_E = get_mu_E_joint(mu_N, mu_G, c_N, copy_number, phi)
-        b_T_j = np.min(seg.BAF[:, 2:4], axis=1)
-        d_T_j = np.sum(seg.BAF[:, 2:4], axis=1)
+
+        if seg.BAF.shape[0] > 1:
+            b_T_j = np.min(seg.BAF[:, 2:4], axis=1)
+            d_T_j = np.sum(seg.BAF[:, 2:4], axis=1)
+            baf = b_T_j * 1.0 / d_T_j
+            outlier = mad_based_outlier(baf)
+            BAF = np.delete(seg.BAF, list(outlier.astype(int)), axis=0)
+            b_T_j = np.min(BAF[:, 2:4], axis=1)
+            d_T_j = np.sum(BAF[:, 2:4], axis=1)
+
+        else:
+            b_T_j = np.min(seg.BAF[:, 2:4], axis=1)
+            d_T_j = np.sum(seg.BAF[:, 2:4], axis=1)
+            pass
+
         # add prior or not?
         ll = log_binomial_likelihood(b_T_j, d_T_j, mu_E)
         ll_bafs = ll.sum(axis=0)
