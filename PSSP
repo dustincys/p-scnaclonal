@@ -11,7 +11,7 @@
 # =============================================================================
 '''
 import argparse
-from PSSP.run import run_dp_model
+from mixclone.PSSP.run import run_dp_model
 
 parser = argparse.ArgumentParser(prog='PSSP')
 parser.add_argument('--version', action='version', version='PSSP-0.0.0')
@@ -21,11 +21,11 @@ subparsers = parser.add_subparsers()
 analyse_parser = subparsers.add_parser(
     'analyse', help='''Start a new PSSP analysis.''')
 analyse_parser.add_argument(
-    'inputFilePsth',
+    'inputFilePath',
     help='Path to tab separated input file. See examples for format.')
 analyse_parser.add_argument(
     'out_dir',
-     help='Path where trace file for MCMC sampler will be written.')
+    help='Path where trace file for MCMC sampler will be written.')
 analyse_parser.add_argument(
     '--num_iters', default=10000, type=int,
     help='''How many iterations of the MCMC chain will run. Default 10,000.''')
