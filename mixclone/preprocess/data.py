@@ -12,15 +12,14 @@
 import sys
 import numpy as np
 import scipy.cluster.hierarchy as hcluster
+from scipy.stats.mstats import gmean
 from collections import Counter
 
 # from GCBASELINE import constants
 # from GCBASELINE.preprocess.utils import *
 from utils import get_chrom_format, get_chrom_lens_idxs, BEDnParser,\
     chrom_name_to_idx, chrom_idx_to_name, get_segment_name, BEDParser,\
-    filter_normal_heterozygous, get_row_by_segment, get_paired_counts,\
-    get_LOH_frac, get_LOH_frac_SNP, get_APM_frac_MAXMIN_SNP,\
-    get_APM_frac_MAXMIN, get_LOH_status, get_APM_status
+    get_LOH_frac, get_APM_frac_MAXMIN, get_LOH_status, get_APM_status
 import constants
 
 
@@ -52,7 +51,6 @@ class Segment:
         self.gc = -1
         self.log_ratio = 0
 
-        self.zoom_factor = -1
         # save the likelihood of the last phi, {phi: (likelihood, copy_number,
         # pi)}
         self.phi_last = None
@@ -247,7 +245,7 @@ class Data:
         for i in range(0, len(mccs)):
             cluster_temp = mccs[i][0]
             print "cluster temp : {}".format(cluster_temp)
-            rdr_temp = reads_depth_ratio[clusters == cluster_temp].mean()
+            rdr_temp = gmean(reads_depth_ratio[clusters == cluster_temp])
             print "rdr_temp"
             print "log: {}".format(np.log(rdr_temp))
             if rdr_min > rdr_temp:

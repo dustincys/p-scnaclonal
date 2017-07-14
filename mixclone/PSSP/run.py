@@ -32,7 +32,12 @@ def run_dp_model(args):
     # trace the record
     mutation_names = [data.segments[i].name for i in range(len(data.segments))]
     trace_db = TraceDB(args.out_dir, mutation_names)
-    cluster_density = FragmentSampledDensity()
+    # 此处应该传递几何baseline
+    # self._baseline = baseline
+    # self._max_copy_number = max_copy_number
+    # self._coverage = coverage
+
+    cluster_density = FragmentSampledDensity(baseline = data.Lambda_S)
 
     try:
         sampler = DirichletProcessSampler(

@@ -33,10 +33,14 @@ class FragmentSampledDensity(Density):
         self._coverage = coverage
         self._allele_config = get_cn_allele_config(max_copy_number)
 
-    def log_p(self, seg, phi):
+    def log_p(self, seg, Phi):
         # phi
-        if seg.phi_last is not None and phi in seg.phi_last.keys():
-            return seg.phi_last[phi].likelihood
+        print "____>>> log_p: seg____"
+        print seg
+        print "_________end log_p:seg______________"
+
+        if seg.phi_last is not None and Phi.phi in seg.phi_last.keys():
+            return seg.phi_last[Phi.phi].likelihood
         else:
             if seg.phi_last is None:
                 seg.phi_last = {}
@@ -45,13 +49,13 @@ class FragmentSampledDensity(Density):
                 idx = randint(0, constants.SEG_RECORD_SIZE - 1)
                 seg.phi_last.pop(seg.phi_last.keys()[idx])
 
-            ll, cn, pi = self._getSegResData(seg, phi)
-            seg.phi_last[phi] = SegmentResultData(ll, cn, pi)
+            ll, cn, pi = self._getSegResData(seg, Phi.phi)
+            seg.phi_last[Phi.phi] = SegmentResultData(ll, cn, pi)
             return ll
 
     def _getSegResData(self, seg, phi):
         copy_numbers = None
-        if seg.BASELINE == "True":
+        if seg.baseline_label == "True":
             copy_numbers = [2]
         elif get_loga(seg) > self._baseline:
             copy_numbers = range(2, self._max_copy_number + 1)
@@ -69,7 +73,7 @@ class FragmentSampledDensity(Density):
         ll_rd = self._getRD(seg, copy_number, phi)
         allele_types = self._allele_config[copy_number]
         self._augBAF(seg, copy_number)
-        if 0 == seg.BAF.shape[0]:
+        if 0 == seg.paired_counts.shape[0]:
             ll_baf = 0
             pi = "*"
         else:
@@ -89,28 +93,45 @@ class FragmentSampledDensity(Density):
     def _getRD(self, seg, copy_number, phi):
         c_N = constants.COPY_NUMBER_NORMAL
         bar_c = phi * copy_number + (1.0 - phi) * c_N
-        lambda_possion = (bar_c / c_N) * self._baseline * (seg.DN + 1) - 1
-        ll_RD = log_poisson_pdf(seg.DT, lambda_possion)
+        print "____>>> _getRD: bar_c, c_N, self._baseline, seg.normal_reads_num____"
+        print bar_c, c_N, self._baseline, seg.normal_reads_num
+        print "_________end _getRD:bar_c, c_N, self._baseline, seg.normal_reads_num______________"
+
+        lambda_possion = (
+            bar_c / c_N) * self._baseline * (seg.normal_reads_num + 1) #not minus 1 ? better
+        if lambda_possion < 0:
+            lambda_possion = 0
+        print "____>>> _getRD: seg.tumor_reads_num, lambda_possion____"
+        print seg.tumor_reads_num, lambda_possion
+        print "_________end _getRD:seg.tumor_reads_num, lambda_possion______________"
+
+        ll_RD = log_poisson_pdf(seg.tumor_reads_num, lambda_possion)
         return ll_RD
 
     def _getBAF(self, seg, copy_number, allele_types, phi):
         c_N = constants.COPY_NUMBER_NORMAL
         mu_N = constants.MU_N
-        mu_G = np.array(allele_types.keys())
+        # keys, ppmm values 0.5
+        mu_G = np.array(allele_types.values())
+
+        print "____>>> _getBAF: mu_N, mu_G, c_N, copy_number, phi____"
+        print mu_N, mu_G, c_N, copy_number, phi
+        print "_________end _getBAF:mu_N, mu_G, c_N, copy_number, phi______________"
+
         mu_E = get_mu_E_joint(mu_N, mu_G, c_N, copy_number, phi)
 
-        if seg.BAF.shape[0] > 1:
-            b_T_j = np.min(seg.BAF[:, 2:4], axis=1)
-            d_T_j = np.sum(seg.BAF[:, 2:4], axis=1)
+        if seg.paired_counts.shape[0] > 1:
+            b_T_j = np.min(seg.paired_counts[:, 2:4], axis=1)
+            d_T_j = np.sum(seg.paired_counts[:, 2:4], axis=1)
             baf = b_T_j * 1.0 / d_T_j
             outlier = mad_based_outlier(baf)
-            BAF = np.delete(seg.BAF, list(outlier.astype(int)), axis=0)
+            BAF = np.delete(seg.paired_counts, list(outlier.astype(int)), axis=0)
             b_T_j = np.min(BAF[:, 2:4], axis=1)
             d_T_j = np.sum(BAF[:, 2:4], axis=1)
 
         else:
-            b_T_j = np.min(seg.BAF[:, 2:4], axis=1)
-            d_T_j = np.sum(seg.BAF[:, 2:4], axis=1)
+            b_T_j = np.min(seg.paired_counts[:, 2:4], axis=1)
+            d_T_j = np.sum(seg.paired_counts[:, 2:4], axis=1)
             pass
 
         # add prior or not?

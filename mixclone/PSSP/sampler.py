@@ -114,7 +114,10 @@ class PyCloneBaseMeasure(BaseMeasure):
 
     def random(self):
         phi = uniform_rvs(0, 1)
-
         return PyCloneParameter(phi)
+
+    def log_p(self, data):
+        return 1
+
 
 PyCloneParameter = namedtuple('PyCloneParameter', ['phi'])

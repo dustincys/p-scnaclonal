@@ -22,8 +22,9 @@ BASELINE = 0
 EMPIRI_BAF = 0.485
 EMPIRI_AAF = 1 - EMPIRI_BAF
 
-
 # segment buffer size
 SEG_RECORD_SIZE = 10
 
 BAF_THRESHOLD = 0.5
+
+MU_N = 0.5

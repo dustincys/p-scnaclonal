@@ -12,7 +12,7 @@
 '''
 import argparse
 from mixclone.PSSP.run import run_dp_model
-from mixclone.PSSP.run_preprocess import run_preprocess_MixClone
+from mixclone.preprocess.run_preprocess import run_preprocess_MixClone
 
 parser = argparse.ArgumentParser(prog='PSSP')
 parser.add_argument('--version', action='version', version='PSSP-0.0.0')
