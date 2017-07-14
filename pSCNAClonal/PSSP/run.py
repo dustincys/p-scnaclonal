@@ -16,9 +16,9 @@ from __future__ import division
 
 import shutil
 
-from mixclone.PSSP.densities import FragmentSampledDensity
-from mixclone.PSSP.sampler import DirichletProcessSampler
-from mixclone.PSSP.trace import TraceDB
+from pSCNAClonal.PSSP.densities import FragmentSampledDensity
+from pSCNAClonal.PSSP.sampler import DirichletProcessSampler
+from pSCNAClonal.PSSP.trace import TraceDB
 
 import pickle as pkl
 
@@ -27,7 +27,7 @@ def run_dp_model(args):
     '''
     Run a fresh instance of the DP model.
     '''
-    data = load_data_mixclone(args.inputFilePath)
+    data = load_data_pSCNAClonal(args.inputFilePath)
 
     # trace the record
     mutation_names = [data.segments[i].name for i in range(len(data.segments))]
@@ -54,7 +54,7 @@ def run_dp_model(args):
     trace_db.close()
 
 
-def load_data_mixclone(inputFilePath):
+def load_data_pSCNAClonal(inputFilePath):
     inputFile = open(inputFilePath, 'rb')
     data = pkl.load(inputFile)
 # test and debug

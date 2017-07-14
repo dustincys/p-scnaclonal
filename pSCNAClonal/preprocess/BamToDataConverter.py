@@ -19,14 +19,14 @@ import pysam
 
 from mcmc import MCMCLM
 
-from mixclone.preprocess.data import Data
-from mixclone.preprocess.iofun import PairedCountsIterator, PairedPileupIterator
-from mixclone.preprocess.utils import get_BAF_counts, normal_heterozygous_filter
+from pSCNAClonal.preprocess.data import Data
+from pSCNAClonal.preprocess.iofun import PairedCountsIterator, PairedPileupIterator
+from pSCNAClonal.preprocess.utils import get_BAF_counts, normal_heterozygous_filter
 
 from plotGC import GCStripePlot
 
 
-class MixClone_Converter:
+class pSCNAClonal_Converter:
 
     def __init__(self, normal_bam_filename, tumor_bam_filename,
                  reference_genome_filename, input_filename_base, segments_bed,
@@ -64,7 +64,7 @@ class MixClone_Converter:
             infile.close()
         else:
             self._load_segments_bed()
-            print "MixClone converter converting"
+            print "pSCNAClonal converter converting"
 
             if "auto" == method:
                 self._MCMC_gccorrection()
@@ -76,7 +76,7 @@ class MixClone_Converter:
         self.visualize()
         self._baseline_selection()
 
-        data_file_name = self.input_filename_base + '.MixClone.input.pkl'
+        data_file_name = self.input_filename_base + '.pSCNAClonal.input.pkl'
         outfile = open(data_file_name, 'wb')
         pkl.dump(self.data, outfile, protocol=2)
 

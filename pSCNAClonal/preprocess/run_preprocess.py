@@ -12,25 +12,25 @@
 '''
 
 import sys
-from BamToDataConverter import MixClone_Converter
+from BamToDataConverter import pSCNAClonal_Converter
 
 import time
 
 
-def run_preprocess_MixClone(args):
+def run_preprocess_pSCNAClonal(args):
     '''
     args.gc_correction_method: manual, auto
     args.baseline_selection_method: manual, auto
     '''
 
-    print "run preprocess MixClone"
+    print "run preprocess pSCNAClonal"
     print "pkl_path"
     print args.pkl_path
     print "pkl_flag"
     print args.pkl_flag
     time_start = time.time()
 
-    converter = MixClone_Converter(
+    converter = pSCNAClonal_Converter(
         args.normal_bam,
         args.tumor_bam,
         args.reference_genome,
