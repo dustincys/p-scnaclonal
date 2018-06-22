@@ -1,3 +1,12 @@
 *.swp
 globalnames
+*globalnames
+**globalnames
+***globalnames
+*.pyc
+**.pyc
+***.pyc
+*/*/*.pyc
+*/*.pyc
+*/*/*/*.pyc
 

@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 '''
 # =============================================================================
 #      FileName: run_preprocess.py
@@ -6,53 +8,58 @@
 #         Email: chu@yanshuo.name
 #      HomePage: http://yanshuo.name
 #       Version: 0.0.1
-#    LastChange: 2016-10-11 10:57:17
+#    LastChange: 2018-03-11 22:40:41
 #       History: Yi Li
 # =============================================================================
 '''
 
 import sys
-from BamToDataConverter import pSCNAClonal_Converter
-
 import time
 
+from phySCNAClonal.preprocess.converter import BamConverter
 
-def run_preprocess_pSCNAClonal(args):
+
+def process(args):
     '''
     args.gc_correction_method: manual, auto
     args.baseline_selection_method: manual, auto
     '''
+    print "run preprocess phy-SCNAClonal"
+    print "pklPath"
+    print args.pklPath
+    print "pklFlag"
+    print args.pklFlag
+    print "minDepth"
+    print args.minDepth
+    print "processNum"
+    print args.processNum
+    print "bedCorrectedPath"
+    print args.bedCorrectedPath
 
-    print "run preprocess pSCNAClonal"
-    print "pkl_path"
-    print args.pkl_path
-    print "pkl_flag"
-    print args.pkl_flag
     time_start = time.time()
 
-    converter = pSCNAClonal_Converter(
-        args.normal_bam,
-        args.tumor_bam,
-        args.reference_genome,
-        args.input_filename_base,
-        args.segments_bed,
-        args.BICseq_bed_corrected,
-        args.pkl_path,
+    converter = BamConverter(
+        args.nBamName,
+        args.tBamName,
+        args.bedName,
+        args.refFaName,
+        args.pathPreFix,
+        args.subcloneNum,
+        args.coverage,
+        args.maxCopyNumber,
+        args.baselineThredLOH,
+        args.baselineThredAPM,
+        minDepth=int(args.minDepth),
+        minBqual=float(args.minBqual),
+        minMqual=float(args.minMqual),
+        processNum=int(args.processNum),
+        bedCorrectedPath=args.bedCorrectedPath,
+        pklPath=args.pklPath)
 
-        args.max_copynumber,
-        args.subclone_num,
-        args.baseline_thred_LOH,
-        args.baseline_thred_APM,
+    # print "pilflag"
+    # print args.pkl_flag
 
-        min_depth=args.min_depth,
-        min_bqual=args.min_base_qual,
-        min_mqual=args.min_map_qual,
-        process_num=args.process_num
-    )
-
-    print "pilflag"
-    print args.pkl_flag
-    converter.convert(args.gc_correction_method, args.pkl_flag)
+    converter.convert(readFromBed = True, method = args.gcCorrectionMethod, pklFlag = True)
 
     time_end = time.time()
 

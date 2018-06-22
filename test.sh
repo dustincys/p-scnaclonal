@@ -2,7 +2,7 @@
 
 rm ./testResult -rf
 ./pscnaclonal analyse \
-    "./n20t80.pkl" \
+    "testData/subsimtree.seg.txt.l1000.bed.inputbase.pSCNAClonal.input.pkl" \
     "./testResult/" \
     --num_iters 10 \
     --concentration 1 \
